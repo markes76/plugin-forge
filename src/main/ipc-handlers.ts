@@ -1,7 +1,11 @@
-import { type IpcMain, type Dialog, BrowserWindow, app } from 'electron'
+import { type IpcMain, type Dialog, BrowserWindow, app, shell } from 'electron'
 import { writePluginToDisk, readPluginFromDisk, listPluginsInDirectory } from './plugin-writer'
 import { installPluginViaCli } from './claude-installer'
 import { exportPluginAsZip, generatePluginZip } from './zip-exporter'
+import AdmZip from 'adm-zip'
+import { mkdtempSync, existsSync, readdirSync } from 'fs'
+import { join } from 'path'
+import { tmpdir } from 'os'
 import {
   getRegistry,
   getRegistryEntry,
@@ -132,9 +136,8 @@ export function registerIpcHandlers(ipcMain: IpcMain, dialog: Dialog): void {
 
   // ── Show file in Finder/Explorer ──
 
-  ipcMain.handle('show-item-in-folder', async (_event, { path }) => {
-    const { shell } = require('electron')
-    shell.showItemInFolder(path)
+  ipcMain.handle('show-item-in-folder', async (_event, { path: filePath }) => {
+    shell.showItemInFolder(filePath)
     return { success: true }
   })
 
@@ -230,34 +233,43 @@ export function registerIpcHandlers(ipcMain: IpcMain, dialog: Dialog): void {
   // ── Import plugin from disk ──
 
   ipcMain.handle('import-plugin', async () => {
-    const result = await dialog.showOpenDialog({
-      properties: ['openFile', 'openDirectory'],
-      title: 'Select Plugin (.zip or folder)',
-      filters: [
-        { name: 'Plugin Archives', extensions: ['zip'] },
-        { name: 'All Files', extensions: ['*'] }
-      ]
-    })
-    if (result.canceled) return null
-    const selectedPath = result.filePaths[0]
+    try {
+      const result = await dialog.showOpenDialog({
+        properties: ['openFile', 'openDirectory'],
+        title: 'Select Plugin (.zip or folder)',
+        filters: [
+          { name: 'Plugin Archives', extensions: ['zip'] },
+          { name: 'All Files', extensions: ['*'] }
+        ]
+      })
+      if (result.canceled) return null
+      const selectedPath = result.filePaths[0]
 
-    let pluginPath = selectedPath
+      let pluginPath = selectedPath
 
-    // If it's a .zip file, extract to temp dir first
-    if (selectedPath.endsWith('.zip')) {
-      const AdmZip = require('adm-zip')
-      const { mkdtempSync } = require('fs')
-      const { join } = require('path')
-      const { tmpdir } = require('os')
-      const tempDir = mkdtempSync(join(tmpdir(), 'plugin-forge-import-'))
-      const zip = new AdmZip(selectedPath)
-      zip.extractAllTo(tempDir, true)
-      pluginPath = tempDir
+      // If it's a .zip file, extract to temp dir first
+      if (selectedPath.endsWith('.zip')) {
+        const tempDir = mkdtempSync(join(tmpdir(), 'plugin-forge-import-'))
+        const zip = new AdmZip(selectedPath)
+        zip.extractAllTo(tempDir, true)
+        pluginPath = tempDir
+
+        // Check if files are nested inside a single folder (common with ZIP archives)
+        const entries = readdirSync(tempDir, { withFileTypes: true })
+        const dirs = entries.filter(e => e.isDirectory() && !e.name.startsWith('.'))
+        if (dirs.length === 1 && !existsSync(join(tempDir, '.claude-plugin'))) {
+          // Files are nested in a subfolder — use that as the plugin root
+          pluginPath = join(tempDir, dirs[0].name)
+        }
+      }
+
+      const data = await readPluginFromDisk(pluginPath)
+      if (!data) return { error: 'Could not parse plugin structure. Make sure the folder contains .claude-plugin/plugin.json.' }
+      return { ...data, sourcePath: selectedPath }
+    } catch (err) {
+      console.error('Import failed:', err)
+      return { error: String(err) }
     }
-
-    const data = await readPluginFromDisk(pluginPath)
-    if (!data) return null
-    return { ...data, sourcePath: selectedPath }
   })
 
   // ── App settings ──
