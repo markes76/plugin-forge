@@ -100,17 +100,24 @@ export async function readPluginFromDisk(
       })
     }
 
-    // Read MCP config
+    // Read MCP config and extract connector IDs
+    let coworkConnectors: string[] = []
     const mcpPath = join(pluginPath, '.mcp.json')
     if (existsSync(mcpPath)) {
-      const mcpRaw = await readFile(mcpPath, 'utf-8')
-      components.push({
-        type: 'mcpServers',
-        config: JSON.parse(mcpRaw)
-      })
+      try {
+        const mcpRaw = await readFile(mcpPath, 'utf-8')
+        const mcpConfig = JSON.parse(mcpRaw)
+        const servers = mcpConfig.mcpServers || {}
+        // Extract connector IDs from HTTP-type entries
+        for (const [id, config] of Object.entries(servers)) {
+          if ((config as any)?.type === 'http') {
+            coworkConnectors.push(id)
+          }
+        }
+      } catch {}
     }
 
-    return { manifest, components }
+    return { manifest, components, coworkConnectors }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     throw new Error(`Failed to read plugin: ${message}`)

@@ -4,7 +4,8 @@ import {
   FolderOpen, Download, Upload, Trash2, Copy, Edit3,
   ChevronDown, ChevronRight, Package
 } from 'lucide-react'
-import type { PluginRegistryEntry, PluginStatus } from '@/types/plugin'
+import type { PluginRegistryEntry, PluginStatus, PluginState } from '@/types/plugin'
+import { generatePlugin } from '@/lib/plugin-generator'
 
 type SortField = 'updatedAt' | 'name' | 'createdAt' | 'version'
 
@@ -98,7 +99,7 @@ export function MyPlugins() {
       components: result.components || [],
       isDirty: false,
       mcpMode: 'cowork',
-      coworkConnectors: []
+      coworkConnectors: (result as any).coworkConnectors || []
     }, undefined, {
       id: newId,
       createdAt: new Date().toISOString(),
@@ -113,6 +114,53 @@ export function MyPlugins() {
     const updated = await window.pluginForge.getRegistry()
     setRegistry(updated)
     navigate(`/builder/${newId}`)
+  }
+
+  const handleExportZip = async (entry: PluginRegistryEntry) => {
+    // Load the saved state (try draft first, then generated)
+    const draft = await window.pluginForge.loadDraft(entry.id)
+    const generated = await window.pluginForge.loadGeneratedState(entry.id)
+    const savedState = (draft?.pluginState || generated) as PluginState | null
+
+    if (!savedState) {
+      alert('Could not load plugin state for export.')
+      return
+    }
+
+    // Generate plugin files from the saved state
+    const files = generatePlugin(savedState)
+
+    // If Cowork mode, patch .mcp.json with real URLs
+    if (savedState.mcpMode === 'cowork' && savedState.coworkConnectors?.length > 0) {
+      const connectorRegistry = await window.pluginForge.getConnectors()
+      const mcpFileIdx = files.findIndex(f => f.relativePath === '.mcp.json')
+      if (mcpFileIdx >= 0) {
+        const mcpServers: Record<string, { type: string; url: string }> = {}
+        for (const id of savedState.coworkConnectors) {
+          const connector = connectorRegistry.find((c: any) => c.id === id)
+          if (connector) mcpServers[id] = { type: 'http', url: connector.url }
+        }
+        files[mcpFileIdx] = {
+          relativePath: '.mcp.json',
+          content: JSON.stringify({ mcpServers }, null, 2)
+        }
+      }
+    }
+
+    // Export as ZIP
+    const result = await window.pluginForge.generatePluginZip(
+      files,
+      entry.name || 'plugin'
+    )
+    if (result?.success) {
+      await window.pluginForge.updateRegistryEntry(entry.id, {
+        status: 'generated',
+        generatedAt: new Date().toISOString(),
+        lastOutputPath: result.path
+      })
+      const updated = await window.pluginForge.getRegistry()
+      setRegistry(updated)
+    }
   }
 
   const filterTabs: Array<{ label: string; value: PluginStatus | 'all'; count: number }> = [
@@ -207,6 +255,7 @@ export function MyPlugins() {
                 })
               }
               onEdit={() => navigate(`/builder/${entry.id}`)}
+              onExportZip={() => handleExportZip(entry)}
               onDuplicate={() => handleDuplicate(entry)}
               onDelete={() => handleDelete(entry.id)}
             />
@@ -222,6 +271,7 @@ function PluginCard({
   isVersionsExpanded,
   onToggleVersions,
   onEdit,
+  onExportZip,
   onDuplicate,
   onDelete
 }: {
@@ -229,6 +279,7 @@ function PluginCard({
   isVersionsExpanded: boolean
   onToggleVersions: () => void
   onEdit: () => void
+  onExportZip: () => void
   onDuplicate: () => void
   onDelete: () => void
 }) {
@@ -291,6 +342,7 @@ function PluginCard({
         </button>
         {entry.status !== 'draft' && (
           <button
+            onClick={onExportZip}
             className="flex items-center gap-1.5 text-small px-3 py-1.5 rounded transition-colors"
             style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
           >
