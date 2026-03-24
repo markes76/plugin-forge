@@ -227,10 +227,58 @@ interface PluginContextValue {
 
 const PluginContext = createContext<PluginContextValue | null>(null)
 
+function migrateState(state: PluginState): PluginState {
+  // Migrate components from old frontmatter format to current flat format
+  const migratedComponents = (state.components || [])
+    .filter((c) => c.type !== 'mcpServers') // Remove old MCP components (connectors are now on root)
+    .map((c: any) => {
+      const id = c.id || nanoid()
+      // If component has a frontmatter object, flatten it
+      if (c.frontmatter) {
+        const fm = c.frontmatter
+        const base = {
+          id,
+          type: c.type,
+          name: fm.name || c.name || '',
+          description: fm.description || c.description || '',
+          body: c.body || ''
+        }
+        if (c.type === 'skill') {
+          return { ...base, scripts: c.scripts || [], references: c.references || [] }
+        }
+        if (c.type === 'agent') {
+          return {
+            ...base,
+            model: fm.model,
+            effort: fm.effort,
+            maxTurns: fm.maxTurns,
+            tools: fm.tools ? (typeof fm.tools === 'string' ? fm.tools.split(',').map((s: string) => s.trim()) : fm.tools) : undefined,
+            disallowedTools: fm.disallowedTools ? (typeof fm.disallowedTools === 'string' ? fm.disallowedTools.split(',').map((s: string) => s.trim()) : fm.disallowedTools) : undefined,
+            memory: fm.memory,
+            background: fm.background,
+            isolation: fm.isolation
+          }
+        }
+        return base // commands
+      }
+      // Already in current format — just ensure id exists
+      if (!c.id) return { ...c, id }
+      if (c.type === 'skill' && !c.scripts) return { ...c, scripts: [], references: [] }
+      return c
+    })
+
+  return {
+    ...state,
+    components: migratedComponents as PluginComponent[],
+    mcpMode: state.mcpMode || 'cowork',
+    coworkConnectors: state.coworkConnectors || []
+  }
+}
+
 export function PluginProvider({ children, initialState }: { children: ReactNode; initialState?: PluginState }) {
-  // Normalize loaded state: ensure new fields have defaults for backward compat
+  // Normalize and migrate loaded state for backward compat
   const normalized = initialState
-    ? { ...createInitialState(), ...initialState, mcpMode: initialState.mcpMode || 'cowork', coworkConnectors: initialState.coworkConnectors || [] }
+    ? migrateState({ ...createInitialState(), ...initialState })
     : createInitialState()
   const [state, dispatch] = useReducer(pluginReducer, normalized)
 
