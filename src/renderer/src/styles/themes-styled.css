@@ -1,0 +1,230 @@
+/* ══════════════════════════════════════════════
+   STYLED THEMES — decorative CSS overrides
+   Active when data-theme matches these themes.
+   All decorations are CSS-only, no React conditionals.
+   ══════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════
+   GRIMOIRE — Fantasy Book / Nature Theme
+   ══════════════════════════════════════ */
+
+[data-theme='grimoire'] {
+  --bg-base: #2a3425;
+  --bg-surface: #3a4434;
+  --bg-elevated: #4a5444;
+  --bg-input: #1e2819;
+  --text-primary: #e8dcc8;
+  --text-secondary: #b8a88c;
+  --text-muted: #7a6e58;
+  --text-on-accent: #1e2819;
+  --accent: #d4943a;
+  --accent-hover: #e8a84e;
+  --accent-muted: rgba(212, 148, 58, 0.15);
+  --border: rgba(180, 150, 100, 0.25);
+  --border-focus: rgba(212, 148, 58, 0.5);
+  --success: #6b9e3a;
+  --error: #c44b3f;
+  --warning: #d4943a;
+  --shadow-inset: inset 0 1px 3px rgba(0, 0, 0, 0.35);
+  --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --font-display: 'Cinzel', serif;
+  --border-decorative: #7a6244;
+}
+
+/* Heading font override */
+[data-theme='grimoire'] h1,
+[data-theme='grimoire'] h2,
+[data-theme='grimoire'] h3,
+[data-theme='grimoire'] h4 {
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.02em;
+}
+
+/* Panel decorations — wooden frames with parchment feel */
+[data-theme='grimoire'] [data-panel] {
+  border: 1px solid var(--border-decorative);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(212, 148, 58, 0.06);
+}
+
+/* Parchment texture overlay */
+[data-theme='grimoire'] [data-panel]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(232, 220, 200, 0.015) 0px,
+      transparent 1px,
+      transparent 3px,
+      rgba(232, 220, 200, 0.01) 4px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(232, 220, 200, 0.01) 0px,
+      transparent 1px,
+      transparent 4px,
+      rgba(232, 220, 200, 0.008) 5px
+    );
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 0;
+}
+
+/* Leaf ornament at top-left corner */
+[data-theme='grimoire'] [data-panel]::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 6px;
+  width: 20px;
+  height: 20px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a6244' stroke-width='1.5'%3E%3Cpath d='M12 3c-4 4-6 8-6 12 0 2 1 3 2 4 1-3 2-5 4-7 2 2 3 4 4 7 1-1 2-2 2-4 0-4-2-8-6-12z'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Button styling — slightly raised, warm feel */
+[data-theme='grimoire'] button[data-accent='true'] {
+  border: 2px solid var(--border-decorative);
+  border-radius: 6px;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.03) 0%, transparent 100%), var(--accent);
+}
+
+/* Input fields — lighter parchment inset */
+[data-theme='grimoire'] input,
+[data-theme='grimoire'] textarea,
+[data-theme='grimoire'] select {
+  border: 2px solid rgba(122, 98, 68, 0.4);
+}
+
+/* Sidebar — dark forest navigation */
+[data-theme='grimoire'] [data-sidebar] {
+  border-right: 2px solid var(--border-decorative);
+}
+
+/* Scrollbar */
+[data-theme='grimoire'] ::-webkit-scrollbar-thumb {
+  background: var(--border-decorative);
+  border-radius: 4px;
+}
+
+
+/* ══════════════════════════════════════
+   IRONWORKS — Industrial / Forge Theme
+   ══════════════════════════════════════ */
+
+[data-theme='ironworks'] {
+  --bg-base: #1c1e22;
+  --bg-surface: #282b31;
+  --bg-elevated: #33373f;
+  --bg-input: #14161a;
+  --text-primary: #d6d3cc;
+  --text-secondary: #95918a;
+  --text-muted: #5e5b54;
+  --text-on-accent: #1c1e22;
+  --accent: #c44b3f;
+  --accent-hover: #d65a4e;
+  --accent-muted: rgba(196, 75, 63, 0.15);
+  --border: rgba(100, 95, 85, 0.35);
+  --border-focus: rgba(196, 75, 63, 0.5);
+  --success: #4a9e7a;
+  --error: #c44b3f;
+  --warning: #d4a03c;
+  --shadow-inset: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+  --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --font-display: 'Rajdhani', sans-serif;
+  --border-decorative: #4a4840;
+}
+
+/* Heading font override — angular, industrial */
+[data-theme='ironworks'] h1,
+[data-theme='ironworks'] h2,
+[data-theme='ironworks'] h3,
+[data-theme='ironworks'] h4 {
+  font-family: 'Rajdhani', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+/* Panel decorations — metal plates */
+[data-theme='ironworks'] [data-panel] {
+  border: 3px solid var(--border-decorative);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+/* Brushed metal texture */
+[data-theme='ironworks'] [data-panel]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.008) 0px,
+      transparent 1px,
+      transparent 2px,
+      rgba(255, 255, 255, 0.005) 3px
+    );
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 0;
+}
+
+/* Corner rivets */
+[data-theme='ironworks'] [data-panel]::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #777 0%, #444 60%, #333 100%);
+  box-shadow:
+    calc(100% - 17px) 0 0 0 #555,
+    0 calc(100% - 17px) 0 0 #555,
+    calc(100% - 17px) calc(100% - 17px) 0 0 #555;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Embossed primary buttons */
+[data-theme='ironworks'] button[data-accent='true'] {
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* Input fields — deep metal recess */
+[data-theme='ironworks'] input,
+[data-theme='ironworks'] textarea,
+[data-theme='ironworks'] select {
+  border: 2px solid var(--border-decorative);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Sidebar — darker steel */
+[data-theme='ironworks'] [data-sidebar] {
+  border-right: 3px solid var(--border-decorative);
+}
+
+/* Scrollbar — dark metal */
+[data-theme='ironworks'] ::-webkit-scrollbar-thumb {
+  background: var(--border-decorative);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+}
