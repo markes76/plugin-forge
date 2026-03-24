@@ -72,28 +72,38 @@ export function MyPlugins() {
   const handleImport = async () => {
     const result = await window.pluginForge.importPlugin()
     if (!result) return
-    // The import returns parsed plugin data — create a new entry
+    if ((result as any).error) {
+      alert(`Import failed: ${(result as any).error}`)
+      return
+    }
+
     const { nanoid } = await import('nanoid')
     const newId = nanoid()
-    const manifest = result.manifest as Record<string, unknown>
+    const manifest = (result.manifest || {}) as Record<string, unknown>
+    const author = manifest.author as Record<string, unknown> | undefined
+    const pluginName = (manifest.name as string) || 'imported-plugin'
 
+    // Save the raw imported data — the PluginProvider's migrateState() will
+    // handle converting frontmatter format to flat format when loaded
     await window.pluginForge.saveDraft(newId, {
       id: newId,
       metadata: {
-        name: manifest.name || 'imported-plugin',
-        version: manifest.version || '1.0.0',
-        description: manifest.description || '',
-        author: manifest.author || { name: '' },
-        license: manifest.license || 'MIT',
-        keywords: manifest.keywords || []
+        name: pluginName,
+        version: (manifest.version as string) || '1.0.0',
+        description: (manifest.description as string) || '',
+        author: { name: (author?.name as string) || '', email: (author?.email as string) || '' },
+        license: (manifest.license as string) || 'MIT',
+        keywords: (manifest.keywords as string[]) || []
       },
       components: result.components || [],
-      isDirty: false
+      isDirty: false,
+      mcpMode: 'cowork',
+      coworkConnectors: []
     }, undefined, {
       id: newId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      name: (manifest.name as string) || 'imported-plugin',
+      name: pluginName,
       mode: 'advanced',
       wizardStep: null,
       lastActiveComponentId: null
