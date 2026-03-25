@@ -2,8 +2,14 @@
 
 export type ModelId = 'opus' | 'sonnet' | 'haiku'
 export type EffortLevel = 'low' | 'medium' | 'high'
-export type HookEvent = 'PreToolUse' | 'PostToolUse' | 'Notification' | 'Stop' | 'SubagentStop'
-export type HookType = 'command' | 'prompt' | 'agent'
+export type HookEvent =
+  | 'SessionStart' | 'UserPromptSubmit' | 'PreToolUse' | 'PermissionRequest'
+  | 'PostToolUse' | 'PostToolUseFailure' | 'Notification'
+  | 'SubagentStart' | 'SubagentStop' | 'Stop' | 'StopFailure'
+  | 'TeammateIdle' | 'TaskCompleted' | 'InstructionsLoaded' | 'ConfigChange'
+  | 'WorktreeCreate' | 'WorktreeRemove' | 'PreCompact' | 'PostCompact'
+  | 'Elicitation' | 'ElicitationResult' | 'SessionEnd'
+export type HookType = 'command' | 'prompt' | 'agent' | 'http'
 export type LicenseId = 'MIT' | 'Apache-2.0' | 'GPL-3.0' | 'BSD-3-Clause' | 'ISC' | 'UNLICENSED'
 
 export interface Author {
@@ -65,6 +71,7 @@ export interface HookRule {
   command?: string
   prompt?: string
   agentName?: string
+  url?: string  // For http hook type
 }
 
 export interface HooksComponent {

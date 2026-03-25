@@ -3,8 +3,15 @@ import { nanoid } from 'nanoid'
 import { Plus, Trash2 } from 'lucide-react'
 import type { HooksComponent, HookEvent, HookType } from '@/types/plugin'
 
-const hookEvents: HookEvent[] = ['PreToolUse', 'PostToolUse', 'Notification', 'Stop', 'SubagentStop']
-const hookTypes: HookType[] = ['command', 'prompt', 'agent']
+const hookEvents: HookEvent[] = [
+  'SessionStart', 'UserPromptSubmit', 'PreToolUse', 'PermissionRequest',
+  'PostToolUse', 'PostToolUseFailure', 'Notification',
+  'SubagentStart', 'SubagentStop', 'Stop', 'StopFailure',
+  'TeammateIdle', 'TaskCompleted', 'InstructionsLoaded', 'ConfigChange',
+  'WorktreeCreate', 'WorktreeRemove', 'PreCompact', 'PostCompact',
+  'Elicitation', 'ElicitationResult', 'SessionEnd'
+]
+const hookTypes: HookType[] = ['command', 'prompt', 'agent', 'http']
 
 interface HookEditorProps {
   hooks: HooksComponent
@@ -189,6 +196,26 @@ export function HookEditor({ hooks }: HookEditorProps) {
                   }
                   placeholder="my-agent"
                   className="w-full h-9"
+                />
+              </div>
+            )}
+
+            {rule.hookType === 'http' && (
+              <div>
+                <label className="block text-small mb-1" style={{ color: 'var(--text-secondary)' }}>
+                  URL (POST endpoint)
+                </label>
+                <input
+                  type="text"
+                  value={rule.url || ''}
+                  onChange={(e) =>
+                    dispatch({
+                      type: 'UPDATE_HOOK_RULE',
+                      payload: { id: rule.id, changes: { url: e.target.value } }
+                    })
+                  }
+                  placeholder="https://api.example.com/webhook"
+                  className="w-full h-9 font-mono text-code"
                 />
               </div>
             )}

@@ -123,6 +123,7 @@ function generateHooks(hooks: HooksComponent): GeneratedFile {
     if (rule.hookType === 'command' && rule.command) hookAction.command = rule.command
     if (rule.hookType === 'prompt' && rule.prompt) hookAction.prompt = rule.prompt
     if (rule.hookType === 'agent' && rule.agentName) hookAction.agent = rule.agentName
+    if (rule.hookType === 'http' && rule.url) hookAction.url = rule.url
 
     // Check if there's an existing entry with the same matcher
     const existingEntry = hooksConfig[rule.event].find((e) => e.matcher === rule.matcher)
@@ -136,9 +137,10 @@ function generateHooks(hooks: HooksComponent): GeneratedFile {
     }
   }
 
+  // Official spec requires hooks wrapped in a "hooks" key
   return {
     relativePath: 'hooks/hooks.json',
-    content: JSON.stringify(hooksConfig, null, 2)
+    content: JSON.stringify({ hooks: hooksConfig }, null, 2)
   }
 }
 
